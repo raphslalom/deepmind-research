@@ -15,27 +15,53 @@
 
 set -e
 
-# We assume the script is being run from the deepmind_research parent directory.
+date +%Y%m%d-%H:%M:%S
 
-DISTOGRAM_MODEL="alphafold_casp13/873731"  # Path to the directory with the distogram model.
-BACKGROUND_MODEL="alphafold_casp13/916425"  # Path to the directory with the background model.
-TORSION_MODEL="alphafold_casp13/941521"  # Path to the directory with the torsion model.
+# Define project directories
+PROJECT_FILES_PATH="${HOME}/project_files"
+PROJECT="2020-08-23-genentech"
+PROJECT_VERSION="v0-deepmind-original"
+INPUT_DATA_DIR="input_data"
+MODEL_DATA_DIR="model"
+OUTPUT_DATA_DIR="output_data"
 
+INPUT_DATA_PATH="${PROJECT_FILES_PATH}/${PROJECT}/${PROJECT_VERSION}/${INPUT_DATA_DIR}"
+MODEL_PATH="${PROJECT_FILES_PATH}/${PROJECT}/${PROJECT_VERSION}/${MODEL_DATA_DIR}"
+OUTPUT_DATA_PATH="${PROJECT_FILES_PATH}/${PROJECT}/${PROJECT_VERSION}/${OUTPUT_DATA_DIR}"
+
+
+# Define input (target) data path
 TARGET="T1019s2"  # The name of the target.
-TARGET_PATH="alphafold_casp13/${TARGET}"  # Path to the directory with the target input data.
+TARGET_PATH="${INPUT_DATA_PATH}/${TARGET}"  # Path to the directory with the target input data.
+echo "TARGET_PATH=${TARGET_PATH}"
+
+
+# Define model path
+DISTOGRAM_MODEL="${MODEL_PATH}/alphafold_casp13_weights/873731"  # Path to the directory with the distogram model.
+BACKGROUND_MODEL="${MODEL_PATH}/alphafold_casp13_weights/916425"  # Path to the directory with the background model.
+TORSION_MODEL="${MODEL_PATH}/alphafold_casp13_weights/941521"  # Path to the directory with the torsion model.
+echo "DISTOGRAM_MODEL=${DISTOGRAM_MODEL}"
+echo "BACKGROUND_MODEL=${BACKGROUND_MODEL}"
+echo "TORSION_MODEL=${TORSION_MODEL}"
+
+
+# Define output path
+OUTPUT_DIR="${OUTPUT_DATA_PATH}/contacts_${TARGET}_$(date +%Y_%m_%d_%H_%M_%S)"
+echo "OUTPUT_DIR=${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
+
+exit
 
 # Set up the virtual environment and install dependencies.
+date +%Y%m%d-%H:%M:%S
 python3 -m venv alphafold_venv
 source alphafold_venv/bin/activate
 pip install wheel
 pip install -r alphafold_casp13/requirements.txt
 
-# Create the output directory.
-OUTPUT_DIR="${HOME}/contacts_${TARGET}_$(date +%Y_%m_%d_%H_%M_%S)"
-mkdir -p "${OUTPUT_DIR}"
-echo "Saving output to ${OUTPUT_DIR}/"
 
 # Run contact prediction over 4 replicas.
+date +%Y%m%d-%H:%M:%S
 for replica in 0 1 2 3; do
   echo "Launching all models for replica ${replica}"
 
@@ -61,6 +87,7 @@ for replica in 0 1 2 3; do
 done
 
 # Run the torsion model, but only 1 replica.
+
 python3 -m alphafold_casp13.contacts \
   --logtostderr \
   --cpu=true \
@@ -70,12 +97,15 @@ python3 -m alphafold_casp13.contacts \
   --eval_sstable="${TARGET_PATH}/${TARGET}.tfrec" \
   --stats_file="${TORSION_MODEL}/stats_train_s35.json" &
 
+date +%Y%m%d-%H:%M:%S
 echo "All models running, waiting for them to complete"
 wait
 
-echo "Ensembling all replica outputs"
+
 
 # Run the ensembling jobs for distograms, background distograms.
+date +%Y%m%d-%H:%M:%S
+echo "Ensembling all replica outputs"
 for output_dir in "${OUTPUT_DIR}/distogram" "${OUTPUT_DIR}/background_distogram"; do
   pickle_dirs="${output_dir}/0/pickle_files/,${output_dir}/1/pickle_files/,${output_dir}/2/pickle_files/,${output_dir}/3/pickle_files/"
 
@@ -92,12 +122,13 @@ python3 -m alphafold_casp13.ensemble_contact_maps \
   --pickle_dirs="${OUTPUT_DIR}/torsion/0/pickle_files/" \
   --output_dir="${OUTPUT_DIR}/torsion/ensemble/"
 
+date +%Y%m%d-%H:%M:%S
 echo "Pasting contact maps"
-
 python3 -m alphafold_casp13.paste_contact_maps \
   --logtostderr \
   --pickle_input_dir="${OUTPUT_DIR}/distogram/ensemble/" \
   --output_dir="${OUTPUT_DIR}/pasted/" \
   --tfrecord_path="${TARGET_PATH}/${TARGET}.tfrec"
 
+date +%Y%m%d-%H:%M:%S
 echo "Done"
