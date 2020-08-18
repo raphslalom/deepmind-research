@@ -50,7 +50,6 @@ OUTPUT_DIR="${OUTPUT_DATA_PATH}/contacts_${TARGET}_$(date +%Y_%m_%d_%H_%M_%S)"
 echo "OUTPUT_DIR=${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
-exit
 
 # Set up the virtual environment and install dependencies.
 date +%Y%m%d-%H:%M:%S
