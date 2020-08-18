@@ -46,7 +46,7 @@ echo "TORSION_MODEL=${TORSION_MODEL}"
 
 
 # Define output path
-OUTPUT_DIR="${OUTPUT_DATA_PATH}/contacts_${TARGET}_$(date +%Y_%m_%d_%H_%M_%S)"
+OUTPUT_DIR="${OUTPUT_DATA_PATH}/${TARGET}/contacts_$(date +%Y%m%d%H%M%S)"
 echo "OUTPUT_DIR=${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
