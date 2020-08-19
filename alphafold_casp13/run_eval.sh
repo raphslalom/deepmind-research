@@ -32,7 +32,7 @@ OUTPUT_DATA_PATH="${PROJECT_FILES_PATH}/${PROJECT}/${PROJECT_VERSION}/${OUTPUT_D
 
 # Define input (target) data path
 TARGET="T1019s2"  # The name of the target.
-TARGET_PATH="${INPUT_DATA_PATH}/${TARGET}"  # Path to the directory with the target input data.
+TARGET_PATH="${INPUT_DATA_PATH}/casp13_data/${TARGET}"  # Path to the directory with the target input data.
 echo "TARGET_PATH=${TARGET_PATH}"
 
 
